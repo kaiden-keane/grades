@@ -86,6 +86,48 @@ class Grade():
     def __str__(self) -> str:
         return f"{self.name}:\tgrade: {self.score}\tweight: {self.weight}"
 
+def edit_grades(chosen_class):
+    grade_choice = ""
+    while (grade_choice != "q"):
+        print("1. display grades")
+        print("2. edit grades")
+        print("3. add grade")
+        print("4. remove grade")
+        print("q to go back")
+
+        grade_choice = input("Enter option: ")
+
+        if grade_choice == "1":
+            print(f"grades for {chosen_class}")
+            for grade in chosen_class.grades:
+                print(grade)
+            print()
+
+        elif grade_choice == "2":
+            print(f"grades for {chosen_class}")
+            for i in range(len(chosen_class.grades)):
+                print(f"\t{i+1}. {chosen_class.grades[i]}")
+            
+            chosen_grades_num = input(f"select grade number 1-{len(chosen_class.grades)}: ")
+            chosen_grade = chosen_class.grades[int(chosen_grades_num) - 1]
+            
+            print(chosen_grade)
+            
+            print(f"current name: {chosen_grade.name}")
+            new_name = input("new name [enter nothing to skip]: ")
+            if new_name != "":
+                chosen_grade.change_name(float(new_name))
+            
+            print(f"current grade: {chosen_grade.score}")
+            new_grade = input("new grade [enter nothing to skip]: ")
+            if new_grade != "":
+                chosen_grade.change_score(float(new_grade))
+            
+            print(f"current weight: {chosen_grade.weight}")
+            new_weight = input("new weight [enter nothing to skip]: ")
+            if new_weight != "":
+                chosen_grade.change_weight(float(new_weight))
+
 
 def main():
     # load data
@@ -120,41 +162,8 @@ def main():
             chosen_class = courses[int(chosen_num) - 1]
             
             print()
+            edit_grades(chosen_class)
             
-            grade_choice = ""
-            while (grade_choice != "q"):
-                print("1. display grades")
-                print("2. edit grades")
-                print("3. add grade")
-                print("4. remove grade")
-                print("q to go back")
-
-                grade_choice = input("Enter option: ")
-
-                if grade_choice == "1":
-                    print(f"grades for {chosen_class}")
-                    for grade in chosen_class.grades:
-                        print(grade)
-                    print()
-
-                elif grade_choice == "2":
-                    print(f"grades for {chosen_class}")
-                    for i in range(len(chosen_class.grades)):
-                        print(f"\t{i+1}. {chosen_class.grades[i]}")
-                    
-                    chosen_grades_num = input(f"select grade number 1-{len(courses)}: ")
-                    chosen_grade = chosen_class.grades[int(chosen_grades_num) - 1]
-                    
-                    print(chosen_grade)
-                    
-                    print(f"current name: {chosen_grade.name}")
-                    chosen_grade.change_name(input("new name: "))
-                    
-                    print(f"current grade: {chosen_grade.score}")
-                    chosen_grade.change_score(float(input("new grade: ")))
-                    
-                    print(f"current weight: {chosen_grade.weight}")
-                    chosen_grade.change_weight(float(input("new weight: ")))
 
         elif choice == "3": # add course
             name = input("name of new course: ")
