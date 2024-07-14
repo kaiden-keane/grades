@@ -13,6 +13,7 @@ def load_data():
                     name, data = line.strip().split(": ")
                     grade, weight = data.strip().split(" ")
                     courses[course_count - 1].grades.append( Grade(name, float(grade.strip()), float(weight.strip()) ) )
+        print(f"successfully loaded {save_filename}")
     
     except FileNotFoundError:
         print(f"cannot find file {save_filename}")
@@ -20,21 +21,20 @@ def load_data():
         print(f"{save_filename} is a directory")
     except PermissionError:
         print(f"insufficient permissions for {save_filename}")
-    
-    return courses
+    finally:
+        return courses
 
       
 def save_data(courses):
     try:
         with open(save_filename, "w") as f:
-            
-            
             for course in courses:
                 f.write(course.name)
                 f.write("\n")
                 
                 for grade in course.grades:
                     f.write("\t" + grade.name + ": " + str(grade.score) + " " + str(grade.weight) + "\n")
+        print(f"successfully saved to {save_filename}")
                 
     except FileNotFoundError:
         print(f"cannot find file {save_filename}")
@@ -56,7 +56,10 @@ class Course():
         for grade in self.grades:
             total_weighted_score += grade.score * grade.weight
             total_weights += grade.weight
-        self.adjusted_avg = total_weighted_score / total_weights
+        if total_weights == 0:
+            self.adjusted_avg = 0
+        else:
+            self.adjusted_avg = total_weighted_score / total_weights
 
     def __str__(self) -> str:
         return self.name
@@ -87,8 +90,8 @@ class Grade():
 def main():
     # load data
     courses = load_data()
-    # for course in courses:
-    #     course.calc_adjusted_weighted_avg()
+    for course in courses:
+        course.calc_adjusted_weighted_avg()
     print("\n")
 
 
@@ -107,7 +110,7 @@ def main():
         if choice == "1": # print courses
             print("\ncurrent course:")
             for course in courses:
-                print(f"\t{course}")
+                print(f"\t{course} | avg: {course.adjusted_avg}")
         
         elif choice == "2": # select course
             print("\ncurrent course:")
@@ -169,7 +172,7 @@ def main():
                 courses.pop(selected_class - 1)
         print()
 
-        save_data(courses)
+    save_data(courses)
     
     # save data
 
