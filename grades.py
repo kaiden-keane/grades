@@ -21,7 +21,25 @@ def load_data():
     except PermissionError:
         print(f"insufficient permissions for {save_filename}")
         
+def save_data(courses):
+    try:
+        with open(save_filename, "w") as f:
             
+            
+            for course in courses:
+                f.write(course.name)
+                f.write("\n")
+                
+                for grade in course.grades:
+                    f.write("\t" + grade.name + ": " + str(grade.score) + " " + str(grade.weight) + "\n")
+                
+    except FileNotFoundError:
+        print(f"cannot find file {save_filename}")
+    except IsADirectoryError:
+        print(f"{save_filename} is a directory")
+    except PermissionError:
+        print(f"insufficient permissions for {save_filename}")
+        
 
 
 class Course():
@@ -129,6 +147,8 @@ def main():
             if check.lower() == "y":
                 courses.pop(selected_class - 1)
         print()
+
+        save_data(courses)
     
     # save data
 
