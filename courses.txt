@@ -1,0 +1,8 @@
+a
+	homework: 100 50
+b
+	ff: 50 100
+c
+	d: 43 0
+d
+	hello there: 32 0
