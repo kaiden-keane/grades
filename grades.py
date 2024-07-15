@@ -73,7 +73,7 @@ class Grade():
         self.name = name
         self.score = score
         self.weight = weight
-
+    
     def change_name(self, new_name):
         self.name = new_name
 
@@ -84,15 +84,41 @@ class Grade():
         self.weight = new_weight
     
     def __str__(self) -> str:
-        return f"{self.name}:\tgrade: {self.score}\tweight: {self.weight}"
+        if self.score == -1:
+            if self.weight == -1:
+                return f"{self.name}:\tgrade: N/A\tweight: N/A"
+            else:
+                return f"{self.name}:\tgrade: N/A\tweight: {self.weight}"
+        elif self.weight == -1:
+            return f"{self.name}:\tgrade: {self.score}\tweight: N/A"
+        else:
+            return f"{self.name}:\tgrade: {self.score}\tweight: {self.weight}"
+
+
+def edit_grade(chosen_grade):
+    print(f"current name: {chosen_grade.name}")
+    new_name = input("new name [enter nothing to skip]: ")
+    if new_name != "":
+        chosen_grade.change_name(float(new_name))
+    
+    print(f"current grade: {chosen_grade.score}")
+    new_grade = input("new grade [enter nothing to skip]: ")
+    if new_grade != "":
+        chosen_grade.change_score(float(new_grade))
+    
+    print(f"current weight: {chosen_grade.weight}")
+    new_weight = input("new weight [enter nothing to skip]: ")
+    if new_weight != "":
+        chosen_grade.change_weight(float(new_weight))
 
 def edit_grades(chosen_class):
+    print("grade editor:")
     grade_choice = ""
     while (grade_choice != "q"):
-        print("1. display grades")
-        print("2. edit grades")
-        print("3. add grade")
-        print("4. remove grade")
+        print("  1. display grades")
+        print("  2. edit grades")
+        print("  3. add grade")
+        print("  4. remove grade")
         print("q to go back")
 
         grade_choice = input("Enter option: ")
@@ -112,21 +138,30 @@ def edit_grades(chosen_class):
             chosen_grade = chosen_class.grades[int(chosen_grades_num) - 1]
             
             print(chosen_grade)
+            edit_grade(chosen_grade)
+        
+        elif grade_choice == "3":
+            new_name = input("Enter name of new grade: ")
+            currnet_grade = Grade(new_name)
+            chosen_class.grades.append(currnet_grade)
             
-            print(f"current name: {chosen_grade.name}")
-            new_name = input("new name [enter nothing to skip]: ")
-            if new_name != "":
-                chosen_grade.change_name(float(new_name))
-            
-            print(f"current grade: {chosen_grade.score}")
             new_grade = input("new grade [enter nothing to skip]: ")
             if new_grade != "":
                 chosen_grade.change_score(float(new_grade))
             
-            print(f"current weight: {chosen_grade.weight}")
             new_weight = input("new weight [enter nothing to skip]: ")
             if new_weight != "":
                 chosen_grade.change_weight(float(new_weight))
+
+        elif grade_choice == "4":
+            print("\nSelect grade to remove:")
+            for i in range(len(chosen_class.grades)):
+                print(f"  {i+1}. {chosen_class.grades[i]}")
+
+            selected_class = int(input(f"select class to remove numbered 1-{len(chosen_class.grades)}: "))
+            check = input(f"are you sure you wish to delete {chosen_class.grades[selected_class-1]}[y/Y]: ")
+            if check.lower() == "y":
+                chosen_class.grades.pop(selected_class - 1)
 
 
 def main():
@@ -134,7 +169,7 @@ def main():
     courses = load_data()
     for course in courses:
         course.calc_adjusted_weighted_avg()
-    print("\n")
+    print()
 
 
     choice = ""
@@ -150,14 +185,19 @@ def main():
         choice = input("Enter option: ")
 
         if choice == "1": # print courses
+            
             print("\ncurrent course:")
+            print("  " + "Class".ljust(19) + "  " + "Grade")
+            print("+" + "-"*20 + "+" + "-" * 10 + "+")
+            
             for course in courses:
-                print(f"\t{course} | avg: {course.adjusted_avg}")
-        
+                print("| " + f"{course}".ljust(19) + "+ " + f"{round(course.adjusted_avg, 3)}".ljust(9) + "|")
+                print("+" + "-"*20 + "+" + "-" * 10 + "+")
+
         elif choice == "2": # select course
-            print("\ncurrent course:")
+            print("\nSelect course from the following:")
             for i in range(len(courses)):
-                print(f"\t{i+1}. {courses[i]} | avg: {courses[i].adjusted_avg}")
+                print(f"  {i+1}. {courses[i]}")
             chosen_num = input(f"select class number 1-{len(courses)}: ")
             chosen_class = courses[int(chosen_num) - 1]
             
@@ -173,7 +213,7 @@ def main():
         elif choice == "4": # remove course
             print("\ncurrent course:")
             for i in range(len(courses)):
-                print(f"\t{i+1}. {courses[i]}")
+                print(f"  {i+1}. {courses[i]}")
 
             selected_class = int(input(f"select class to remove numbered 1-{len(courses)}: "))
             check = input(f"are you sure you wish to delete {courses[selected_class-1]}[y/Y]: ")
@@ -182,8 +222,6 @@ def main():
         print()
 
     save_data(courses)
-    
-    # save data
 
 if __name__ == "__main__":
     save_filename = "courses.txt"
