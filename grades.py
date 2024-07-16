@@ -1,8 +1,23 @@
-def load_data():
+from os import listdir
+from os.path import isfile, join
+
+
+def load_data(data_directory):
+    semesters = []
+    files = [f for f in listdir(data_directory) if isfile(join(data_directory, f))]
+    for file in files:
+        new_sem = Semester(file.split(".")[0]) # dont include the .txt
+        new_sem.courses = load_semester(join(data_directory, file))
+        semesters.append(new_sem)
+    
+    return semesters
+
+
+def load_semester(filename):
     courses = []
     
     try:
-        with open(save_filename, "r") as f:
+        with open(filename, "r") as f:
             course_count = 0
             for line in f:
                 if not (line.startswith("\t") or line.startswith(" ")):
@@ -13,35 +28,46 @@ def load_data():
                     name, data = line.strip().split(": ")
                     grade, weight = data.strip().split(" ")
                     courses[course_count - 1].grades.append( Grade(name, float(grade.strip()), float(weight.strip()) ) )
-        print(f"successfully loaded {save_filename}")
+        print(f"successfully loaded {filename}")
     
     except FileNotFoundError:
-        print(f"cannot find file {save_filename}")
+        print(f"cannot find file {filename}")
     except IsADirectoryError:
-        print(f"{save_filename} is a directory")
+        print(f"{filename} is a directory")
     except PermissionError:
-        print(f"insufficient permissions for {save_filename}")
+        print(f"insufficient permissions for {filename}")
     finally:
         return courses
 
-      
-def save_data(courses):
+
+def save_data(semesters):
+    for semester in semesters:
+        save_semester(semester.name + ".txt", semester.courses)
+
+
+def save_semester(filename, courses):
     try:
-        with open(save_filename, "w") as f:
+        with open(filename, "w") as f:
             for course in courses:
                 f.write(course.name)
                 f.write("\n")
                 
                 for grade in course.grades:
                     f.write("\t" + grade.name + ": " + str(grade.score) + " " + str(grade.weight) + "\n")
-        print(f"successfully saved to {save_filename}")
+        print(f"successfully saved to {filename}")
                 
     except FileNotFoundError:
-        print(f"cannot find file {save_filename}")
+        print(f"cannot find file {filename}")
     except IsADirectoryError:
-        print(f"{save_filename} is a directory")
+        print(f"{filename} is a directory")
     except PermissionError:
-        print(f"insufficient permissions for {save_filename}")
+        print(f"insufficient permissions for {filename}")
+
+
+class Semester():
+    def __init__(self, name) -> None:
+        self.name = name
+        self.courses = []
 
 
 class Course():
@@ -111,6 +137,7 @@ def edit_grade(chosen_grade):
     if new_weight != "":
         chosen_grade.change_weight(float(new_weight))
 
+
 def edit_grades(chosen_class):
     print("grade editor:")
     grade_choice = ""
@@ -164,13 +191,9 @@ def edit_grades(chosen_class):
                 chosen_class.grades.pop(selected_class - 1)
 
 
-def main():
-    # load data
-    courses = load_data()
-    for course in courses:
-        course.calc_adjusted_weighted_avg()
-    print()
-
+def edit_courses(semester):
+    print(f"viewing courses for semester {semester.name}:")
+    courses = semester.courses
 
     choice = ""
     while (choice != 'q'):
@@ -221,8 +244,29 @@ def main():
                 courses.pop(selected_class - 1)
         print()
 
-    save_data(courses)
+def main():
+    # load data
+    semesters = load_data(data_directory="courses")
+    for semester in semesters:
+        for course in semester.courses:
+            course.calc_adjusted_weighted_avg()
+    print()
+    
+    choice = ""
+    while(choice != "q"):
+        print("current semesters:")
+        for i in range(len(semesters)):
+            print(f"  {i+1}. {semesters[i].name}")
+        
+        choice = input(f"pick a semester to view (1-{len(semesters)}): ")
+        if (choice.isdigit() and (int(choice) > 0 and int(choice) <= len(semesters))):
+            print()
+            edit_courses(semesters[int(choice) - 1])
+        elif choice != "q":
+            print("please inter digit 1-{len(semesters)}")
+
+    save_data(semesters)
+
 
 if __name__ == "__main__":
-    save_filename = "courses.txt"
     main()
