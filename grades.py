@@ -68,6 +68,20 @@ class Semester():
     def __init__(self, name) -> None:
         self.name = name
         self.courses = []
+        self.avg = 0
+    
+    def calc_avg(self):
+        total_avg = 0
+        count = 0
+        for course in self.courses:
+            total_avg += course.adjusted_avg
+            count += 1
+        if count == 0:
+            self.avg = 0
+        else:
+            self.avg = total_avg / count
+        
+        return self.avg
 
 
 class Course():
@@ -234,7 +248,7 @@ def edit_courses(semester):
             courses = sorted(courses)
 
         elif choice == "4": # remove course
-            print("\ncurrent course:")
+            print("\ncurrent courses:")
             for i in range(len(courses)):
                 print(f"  {i+1}. {courses[i]}")
 
@@ -254,17 +268,55 @@ def main():
     
     choice = ""
     while(choice != "q"):
-        print("current semesters:")
-        for i in range(len(semesters)):
-            print(f"  {i+1}. {semesters[i].name}")
-        
-        choice = input(f"pick a semester to view (1-{len(semesters)}): ")
-        if (choice.isdigit() and (int(choice) > 0 and int(choice) <= len(semesters))):
-            print()
-            edit_courses(semesters[int(choice) - 1])
-        elif choice != "q":
-            print("please inter digit 1-{len(semesters)}")
+        print("  1. Display semester averages")
+        print("  2. view semester")
+        print("  3. Add semester")
+        print("  4. delete semester")
+        print("q to quit")
 
+        choice = input("Enter choice: ")
+
+        if choice == "1":
+            print("\ncurrent semester avg:")
+            for sem in semesters:
+                avg = sem.calc_avg()
+                print(f"  {sem.name}: {avg}")
+
+        elif choice == "2":
+            view_choice = ""
+            while (view_choice != "q"):
+                print("\ncurrent semesters:")
+                for i in range(len(semesters)):
+                    print(f"  {i+1}. {semesters[i].name}")
+                
+                view_choice = input(f"pick a semester to view (1-{len(semesters)}): ")
+                if (choice.isdigit()):
+                    if (int(view_choice) > 0 and int(view_choice) <= len(semesters)):
+                        print()
+                        edit_courses(semesters[int(view_choice) - 1])
+                elif choice != "q":
+                    print("please inter digit 1-{len(semesters)}")
+
+        elif choice == "3":
+            new_name = input("\nEnter name for semester: ")
+            semesters.append(Semester(new_name))
+
+        elif choice == "4":
+            print("\ncurrent semesters:")
+            for i in range(len(semesters)):
+                print(f"  {i+1}. {semesters[i].name}")
+
+            selected_sem = input(f"select class to remove numbered 1-{len(semesters)}: ")
+            succeed = False
+            if selected_sem.isdigit():
+                if (int(selected_sem) > 0 and int(selected_sem) <= len(semesters)):
+                    check = input(f"are you sure you wish to delete {semesters[selected_sem-1]}[y/Y]: ")
+                    if check.lower() == "y":
+                        semesters.pop(selected_sem - 1)
+                        succeed = True
+            if succeed == False:
+                print("error deleting semester")
+        print()
     save_data(semesters)
 
 
