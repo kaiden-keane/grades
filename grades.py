@@ -1,10 +1,15 @@
 from os import listdir
 from os.path import isfile, join
-
+from os import mkdir
 
 def load_data(data_directory):
     semesters = []
-    files = [f for f in listdir(data_directory) if isfile(join(data_directory, f))]
+    try:
+        files = [f for f in listdir(data_directory) if isfile(join(data_directory, f))]
+    except FileNotFoundError:
+        mkdir(data_directory)
+        files = [f for f in listdir(data_directory) if isfile(join(data_directory, f))]
+    
     for file in files:
         new_sem = Semester(file.split(".")[0]) # dont include the .txt
         new_sem.courses = load_semester(join(data_directory, file))
@@ -40,9 +45,9 @@ def load_semester(filename):
         return courses
 
 
-def save_data(semesters):
+def save_data(data_directory, semesters):
     for semester in semesters:
-        save_semester(semester.name + ".txt", semester.courses)
+        save_semester(data_directory + "/" + semester.name + ".txt", semester.courses)
 
 
 def save_semester(filename, courses):
@@ -183,16 +188,16 @@ def edit_grades(chosen_class):
         
         elif grade_choice == "3":
             new_name = input("Enter name of new grade: ")
-            currnet_grade = Grade(new_name)
-            chosen_class.grades.append(currnet_grade)
+            current_grade = Grade(new_name)
+            chosen_class.grades.append(current_grade)
             
-            new_grade = input("new grade [enter nothing to skip]: ")
+            new_grade = input("mark recieved [enter nothing to skip]: ")
             if new_grade != "":
-                chosen_grade.change_score(float(new_grade))
+                current_grade.change_score(float(new_grade))
             
-            new_weight = input("new weight [enter nothing to skip]: ")
+            new_weight = input("weight [enter nothing to skip]: ")
             if new_weight != "":
-                chosen_grade.change_weight(float(new_weight))
+                current_grade.change_weight(float(new_weight))
 
         elif grade_choice == "4":
             print("\nSelect grade to remove:")
@@ -235,11 +240,14 @@ def edit_courses(semester):
             print("\nSelect course from the following:")
             for i in range(len(courses)):
                 print(f"  {i+1}. {courses[i]}")
-            chosen_num = input(f"select class number 1-{len(courses)}: ")
-            chosen_class = courses[int(chosen_num) - 1]
+            if len(courses) == 0:
+                print("No courses exist. Not Completed")
+            else:
+                chosen_num = input(f"select class number 1-{len(courses)}: ")
+                chosen_class = courses[int(chosen_num) - 1]
             
-            print()
-            edit_grades(chosen_class)
+                print()
+                edit_grades(chosen_class)
             
 
         elif choice == "3": # add course
@@ -251,16 +259,20 @@ def edit_courses(semester):
             print("\ncurrent courses:")
             for i in range(len(courses)):
                 print(f"  {i+1}. {courses[i]}")
-
-            selected_class = int(input(f"select class to remove numbered 1-{len(courses)}: "))
-            check = input(f"are you sure you wish to delete {courses[selected_class-1]}[y/Y]: ")
-            if check.lower() == "y":
-                courses.pop(selected_class - 1)
+            
+            if len(courses) == 0:
+                print("No courses exist. Not Completed")
+            else:
+                selected_class = int(input(f"select class to remove numbered 1-{len(courses)}: "))
+                check = input(f"are you sure you wish to delete {courses[selected_class-1]}[y/Y]: ")
+                if check.lower() == "y":
+                    courses.pop(selected_class - 1)
         print()
 
 def main():
+    data_directory = "courses"
     # load data
-    semesters = load_data(data_directory="courses")
+    semesters = load_data(data_directory)
     for semester in semesters:
         for course in semester.courses:
             course.calc_adjusted_weighted_avg()
@@ -289,13 +301,18 @@ def main():
                 for i in range(len(semesters)):
                     print(f"  {i+1}. {semesters[i].name}")
                 
-                view_choice = input(f"pick a semester to view (1-{len(semesters)}): ")
-                if (choice.isdigit()):
-                    if (int(view_choice) > 0 and int(view_choice) <= len(semesters)):
-                        print()
-                        edit_courses(semesters[int(view_choice) - 1])
-                elif choice != "q":
-                    print("please inter digit 1-{len(semesters)}")
+                if len(semesters) == 0:
+                    print("No courses exist. Not Completed")
+                    break
+                else:
+                    view_choice = input(f"pick a semester to view (1-{len(semesters)}): ")
+                    if (view_choice.isdigit()):
+                        if (int(view_choice) > 0 and int(view_choice) <= len(semesters)):
+                            print()
+                            edit_courses(semesters[int(view_choice) - 1])
+                            break
+                    elif choice != "q":
+                        print(f"please enter digit 1-{len(semesters)}")
 
         elif choice == "3":
             new_name = input("\nEnter name for semester: ")
@@ -306,18 +323,21 @@ def main():
             for i in range(len(semesters)):
                 print(f"  {i+1}. {semesters[i].name}")
 
-            selected_sem = input(f"select class to remove numbered 1-{len(semesters)}: ")
-            succeed = False
-            if selected_sem.isdigit():
-                if (int(selected_sem) > 0 and int(selected_sem) <= len(semesters)):
-                    check = input(f"are you sure you wish to delete {semesters[selected_sem-1]}[y/Y]: ")
-                    if check.lower() == "y":
-                        semesters.pop(selected_sem - 1)
-                        succeed = True
-            if succeed == False:
-                print("error deleting semester")
+            if len(semesters) == 0:
+                print("No courses exist. Not Completed")
+            else:
+                selected_sem = input(f"select class to remove numbered 1-{len(semesters)}: ")
+                succeed = False
+                if selected_sem.isdigit():
+                    if (int(selected_sem) > 0 and int(selected_sem) <= len(semesters)):
+                        check = input(f"are you sure you wish to delete {semesters[selected_sem-1]}[y/Y]: ")
+                        if check.lower() == "y":
+                            semesters.pop(selected_sem - 1)
+                            succeed = True
+                if succeed == False:
+                    print("error deleting semester")
         print()
-    save_data(semesters)
+    save_data(data_directory, semesters)
 
 
 if __name__ == "__main__":
