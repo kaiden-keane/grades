@@ -1,7 +1,5 @@
 import tkinter as tk
-from os import listdir
-from os.path import isfile, join
-from os import mkdir
+import utils
 
 
 def bind_children_to_click(widget, callback, button="<Button-1>"):
@@ -19,105 +17,47 @@ class App(tk.Tk):
         self.geometry(f"{dimensions[0]}x{dimensions[1]}")
         self.minsize(dimensions[0], dimensions[1])
 
-        sem_list = SemesterList(self)
-        sem_list.pack(expand=True, fill='both')
+        # load data
+        sem_list = utils.load_semesters("courses")
+        for sem in sem_list:
+            for course in sem.courses:
+                course.calc_adjusted_weighted_avg()
+            sem.calc_avg()
+
+        GUI_sem_list = GUI_SemesterList(self, sem_list)
+        GUI_sem_list.pack(expand=True, fill='both')
         
         self.mainloop()
 
 
-class SemesterList(tk.Frame):
-    def __init__(self, parent) -> None:
+class GUI_SemesterList(tk.Frame):
+    def __init__(self, parent, sem_list=[]) -> None:
         super().__init__(parent, highlightbackground="black", highlightthickness=1)
-        a = tk.Label(self, text="Semesters", font=("Arial", 40), highlightbackground="black", highlightthickness=1)
-        a.pack(side="top")
+        self.sem_list = sem_list
+        
+        title = tk.Label(self, text="Semesters", font=("Arial", 40), highlightbackground="black", highlightthickness=1)
+        title.pack(side="top")
         semList = tk.Frame(self, highlightbackground="black", highlightthickness=1)
 
-        self.sem_list = self.load_semesters(semList, "courses")
+        self.GUI_sem_list = []
 
         for sem in self.sem_list:
-            for course in sem.courses:
-                course.calc_adjusted_weighted_avg()
-            
-            sem.calc_avg()
-            sem.pack(side="top", pady=10)    
+            self.GUI_sem_list.append(GUI_Semester(semList, sem.name, sem.calc_avg()))
+        for sem in self.GUI_sem_list:
+            sem.pack(side="top", pady=10)
         
-        
+
         semList.pack(fill=None, expand=False)
-        
+                
 
-    def load_semesters(self, parent, data_directory):
-        semesters = []
-        try:
-            files = [f for f in listdir(data_directory) if isfile(join(data_directory, f))]
-        except FileNotFoundError:
-            mkdir(data_directory)
-            files = [f for f in listdir(data_directory) if isfile(join(data_directory, f))]
-        
-        for file in files:
-            new_sem = Semester(parent, file.split(".")[0]) # dont include the .txt
-            new_sem.courses = self.load_semester(parent, join(data_directory, file))
-            semesters.append(new_sem)
-        
-        return semesters
-
-    def load_semester(self, parent, filename):
-        courses = []
-        
-        try:
-            with open(filename, "r") as f:
-                course_count = 0
-                for line in f:
-                    if not (line.startswith("\t") or line.startswith(" ")):
-                        courses.append(Course(parent, line.strip()))
-                        course_count += 1
-                        
-                    else:
-                        name, data = line.strip().split(": ")
-                        grade, weight = data.strip().split(" ")
-                        courses[course_count - 1].grades.append( Grade(self, name, float(grade.strip()), float(weight.strip()) ) )
-            print(f"successfully loaded {filename}")
-        
-        except FileNotFoundError:
-            print(f"cannot find file {filename}")
-        except IsADirectoryError:
-            print(f"{filename} is a directory")
-        except PermissionError:
-            print(f"insufficient permissions for {filename}")
-        finally:
-            return courses
-    
-    def save_sem_data(self, data_directory, semesters):
-        for semester in semesters:
-            self.save_semester(data_directory + "/" + semester.name + ".txt", semester.courses)
-    
-    def save_semester(filename, courses):
-        try:
-            with open(filename, "w") as f:
-                for course in courses:
-                    f.write(course.name)
-                    f.write("\n")
-                    
-                    for grade in course.grades:
-                        f.write("\t" + grade.name + ": " + str(grade.score) + " " + str(grade.weight) + "\n")
-            print(f"successfully saved to {filename}")
-                    
-        except FileNotFoundError:
-            print(f"cannot find file {filename}")
-        except IsADirectoryError:
-            print(f"{filename} is a directory")
-        except PermissionError:
-            print(f"insufficient permissions for {filename}")
-            
-
-class Semester(tk.Frame):
-    def __init__(self, parent, name, courses=[]) -> None:
+class GUI_Semester(tk.Frame):
+    def __init__(self, parent, name, average) -> None:
         super().__init__(parent, highlightbackground="black", highlightthickness=1)
         self.name = name
-        self.courses = courses
-        self.calc_avg()
+        self.avg = average
         
         sem_name = tk.Label(self, text=self.name, font=("Arial", 25), padx=10)
-        sem_grade = tk.Label(self, text=f"avg: {self.avg}", font=("Arial", 20), padx=10)
+        sem_grade = tk.Label(self, text=f"avg: {round(self.avg, 2)}", font=("Arial", 20), padx=10)
 
         sem_name.pack(side="left")
         sem_grade.pack(side="right")
@@ -126,84 +66,35 @@ class Semester(tk.Frame):
         bind_children_to_click(self, self.foo)
         self.config(cursor="openhand")
     
-    def calc_avg(self):
-        total_avg = 0
-        count = 0
-        for course in self.courses:
-            total_avg += course.adjusted_avg
-            count += 1
-        if count == 0:
-            self.avg = 0
-        else:
-            self.avg = total_avg / count
-        
-        return self.avg
     
     def foo(self, event):
         print(self.name + " has been pressed")
-    
-    def __str__(self) -> str:
-        return self.name
 
 
-
-class CourseList(tk.Frame):
+class GUI_CourseList(tk.Frame):
     def __init__(self, parent) -> None:
         super().__init__(parent)
 
 
-class Course(tk.Frame):
+class GUI_Course(tk.Frame):
     def __init__(self, parent, name, grade_list=[]) -> None:
         super().__init__(parent)
         self.name = name
         self.grades = grade_list
         self.adjusted_avg = self.calc_adjusted_weighted_avg()
-    
-    def calc_adjusted_weighted_avg(self):
-        total_weighted_score = 0
-        total_weights = 0
-        for grade in self.grades:
-            total_weighted_score += grade.score * grade.weight
-            total_weights += grade.weight
-        
-        if total_weights == 0:
-            self.adjusted_avg = 0
-        else:
-            self.adjusted_avg = total_weighted_score / total_weights
-        
-        return self.adjusted_avg
-
-    def __str__(self) -> str:
-        return self.name
-
-    def __lt__(self, other):
-        return self.name < other.name
 
 
-class GradeList(tk.Frame):
+class GUI_GradeList(tk.Frame):
     def __init__(self, parent) -> None:
         super().__init__(parent)
 
 
-class Grade(tk.Frame):
+class GUI_Grade(tk.Frame):
     def __init__(self, parent, name, score=-1, weight=-1) -> None:
         super().__init__(parent)
         self.name = name
         self.score = score
         self.weight = weight
-    
-    def change_name(self, new_name):
-        self.name = new_name
-
-    def change_score(self, new_score):
-        self.score = new_score
-    
-    def change_weight(self, new_weight):
-        self.weight = new_weight
-    
-    def __str__(self) -> str:
-        return self.name
-
 
 if __name__ == "__main__":
     App("test", (600, 600))
