@@ -28,19 +28,21 @@ class App(tk.Tk):
 class SemesterList(tk.Frame):
     def __init__(self, parent) -> None:
         super().__init__(parent, highlightbackground="black", highlightthickness=1)
-        a = tk.Label(self, text="Semesters", font=("Arial", 25), highlightbackground="black", highlightthickness=1)
+        a = tk.Label(self, text="Semesters", font=("Arial", 40), highlightbackground="black", highlightthickness=1)
         a.pack(side="top")
-        semList = tk.Frame(self, width=100, height=100, highlightbackground="black", highlightthickness=1)
-        
-        # self.sem_list = [Semester(semList, "semester 1"), Semester(semList, "semester 2")]
+        semList = tk.Frame(self, highlightbackground="black", highlightthickness=1)
 
         self.sem_list = self.load_semesters(semList, "courses")
 
         for sem in self.sem_list:
-            sem.pack(side="top", pady=10)
+            for course in sem.courses:
+                course.calc_adjusted_weighted_avg()
+            
+            sem.calc_avg()
+            sem.pack(side="top", pady=10)    
+        
         
         semList.pack(fill=None, expand=False)
-        self.focus()
         
 
     def load_semesters(self, parent, data_directory):
@@ -108,14 +110,14 @@ class SemesterList(tk.Frame):
             
 
 class Semester(tk.Frame):
-    def __init__(self, parent, name) -> None:
+    def __init__(self, parent, name, courses=[]) -> None:
         super().__init__(parent, highlightbackground="black", highlightthickness=1)
         self.name = name
-        self.courses = []
-        self.avg = 0
+        self.courses = courses
+        self.calc_avg()
         
-        sem_name = tk.Label(self, text=self.name)
-        sem_grade = tk.Label(self, text=self.avg)
+        sem_name = tk.Label(self, text=self.name, font=("Arial", 25), padx=10)
+        sem_grade = tk.Label(self, text=f"avg: {self.avg}", font=("Arial", 20), padx=10)
 
         sem_name.pack(side="left")
         sem_grade.pack(side="right")
@@ -124,8 +126,24 @@ class Semester(tk.Frame):
         bind_children_to_click(self, self.foo)
         self.config(cursor="openhand")
     
+    def calc_avg(self):
+        total_avg = 0
+        count = 0
+        for course in self.courses:
+            total_avg += course.adjusted_avg
+            count += 1
+        if count == 0:
+            self.avg = 0
+        else:
+            self.avg = total_avg / count
+        
+        return self.avg
+    
     def foo(self, event):
         print(self.name + " has been pressed")
+    
+    def __str__(self) -> str:
+        return self.name
 
 
 
@@ -135,9 +153,31 @@ class CourseList(tk.Frame):
 
 
 class Course(tk.Frame):
-    def __init__(self, parent, name) -> None:
+    def __init__(self, parent, name, grade_list=[]) -> None:
         super().__init__(parent)
         self.name = name
+        self.grades = grade_list
+        self.adjusted_avg = self.calc_adjusted_weighted_avg()
+    
+    def calc_adjusted_weighted_avg(self):
+        total_weighted_score = 0
+        total_weights = 0
+        for grade in self.grades:
+            total_weighted_score += grade.score * grade.weight
+            total_weights += grade.weight
+        
+        if total_weights == 0:
+            self.adjusted_avg = 0
+        else:
+            self.adjusted_avg = total_weighted_score / total_weights
+        
+        return self.adjusted_avg
+
+    def __str__(self) -> str:
+        return self.name
+
+    def __lt__(self, other):
+        return self.name < other.name
 
 
 class GradeList(tk.Frame):
@@ -151,6 +191,18 @@ class Grade(tk.Frame):
         self.name = name
         self.score = score
         self.weight = weight
+    
+    def change_name(self, new_name):
+        self.name = new_name
+
+    def change_score(self, new_score):
+        self.score = new_score
+    
+    def change_weight(self, new_weight):
+        self.weight = new_weight
+    
+    def __str__(self) -> str:
+        return self.name
 
 
 if __name__ == "__main__":
