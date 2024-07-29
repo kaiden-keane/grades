@@ -3,8 +3,6 @@ from os import listdir
 from os.path import isfile, join
 from os import mkdir
 
-def foo(event):
-    print("button pressed")
 
 def bind_children_to_click(widget, callback, button="<Button-1>"):
     """Bind all children of a widget to the click event."""
@@ -23,7 +21,7 @@ class App(tk.Tk):
 
         sem_list = SemesterList(self)
         sem_list.pack(expand=True, fill='both')
-        print("gfdsf")
+        
         self.mainloop()
 
 
@@ -34,7 +32,9 @@ class SemesterList(tk.Frame):
         a.pack(side="top")
         semList = tk.Frame(self, width=100, height=100, highlightbackground="black", highlightthickness=1)
         
-        self.sem_list = [Semester(semList, "semester 1"), Semester(semList, "semester 2")]
+        # self.sem_list = [Semester(semList, "semester 1"), Semester(semList, "semester 2")]
+
+        self.sem_list = self.load_semesters(semList, "courses")
 
         for sem in self.sem_list:
             sem.pack(side="top", pady=10)
@@ -43,7 +43,7 @@ class SemesterList(tk.Frame):
         self.focus()
         
 
-    def load_semester_data(self, data_directory):
+    def load_semesters(self, parent, data_directory):
         semesters = []
         try:
             files = [f for f in listdir(data_directory) if isfile(join(data_directory, f))]
@@ -52,13 +52,13 @@ class SemesterList(tk.Frame):
             files = [f for f in listdir(data_directory) if isfile(join(data_directory, f))]
         
         for file in files:
-            new_sem = Semester(file.split(".")[0]) # dont include the .txt
-            new_sem.courses = self.load_semester(join(data_directory, file))
+            new_sem = Semester(parent, file.split(".")[0]) # dont include the .txt
+            new_sem.courses = self.load_semester(parent, join(data_directory, file))
             semesters.append(new_sem)
         
         return semesters
 
-    def load_semester(self, filename):
+    def load_semester(self, parent, filename):
         courses = []
         
         try:
@@ -66,13 +66,13 @@ class SemesterList(tk.Frame):
                 course_count = 0
                 for line in f:
                     if not (line.startswith("\t") or line.startswith(" ")):
-                        courses.append(Course(line.strip()))
+                        courses.append(Course(parent, line.strip()))
                         course_count += 1
                         
                     else:
                         name, data = line.strip().split(": ")
                         grade, weight = data.strip().split(" ")
-                        courses[course_count - 1].grades.append( Grade(name, float(grade.strip()), float(weight.strip()) ) )
+                        courses[course_count - 1].grades.append( Grade(self, name, float(grade.strip()), float(weight.strip()) ) )
             print(f"successfully loaded {filename}")
         
         except FileNotFoundError:
@@ -132,14 +132,12 @@ class Semester(tk.Frame):
 class CourseList(tk.Frame):
     def __init__(self, parent) -> None:
         super().__init__(parent)
-        self.courses = []
 
 
 class Course(tk.Frame):
-    def __init__(self, master, name) -> None:
+    def __init__(self, parent, name) -> None:
+        super().__init__(parent)
         self.name = name
-        frame = tk.Frame(master)
-        frame.pack()
 
 
 class GradeList(tk.Frame):
@@ -148,8 +146,11 @@ class GradeList(tk.Frame):
 
 
 class Grade(tk.Frame):
-    def __init__(self, parent) -> None:
+    def __init__(self, parent, name, score=-1, weight=-1) -> None:
         super().__init__(parent)
+        self.name = name
+        self.score = score
+        self.weight = weight
 
 
 if __name__ == "__main__":
