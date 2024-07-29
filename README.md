@@ -2,4 +2,4 @@
 
 Python script to track grades and display info about it such as average for class, semester, year. grade required to obtain x and so on
 
-Currently only CLI however a gui version is under progress in the gui branch
+current gui version is under development, the cli branch functionally works
