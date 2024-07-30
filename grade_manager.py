@@ -18,36 +18,26 @@ class App(tk.Tk):
         self.geometry(f"{dimensions[0]}x{dimensions[1]}")
         self.minsize(dimensions[0], dimensions[1])
 
-        # load data
-        sem_list = utils.load_semesters("courses")
-        for sem in sem_list:
-            for course in sem.courses:
-                course.calc_adjusted_weighted_avg()
-            sem.calc_avg()
 
-        GUI_sem_list = GUI_SemesterList(self, sem_list)
+        GUI_sem_list = GUI_SemesterList(self)
         GUI_sem_list.pack(expand=True, fill='both')
         
         self.mainloop()
 
 
 class GUI_SemesterList(tk.Frame):
-    def __init__(self, parent, sem_list=[]) -> None:
+    def __init__(self, parent) -> None:
         super().__init__(parent, highlightbackground="black", highlightthickness=1)
-        self.sem_list = sem_list
         
         title = tk.Label(self, text="Semesters", font=("Arial", 40), highlightbackground="black", highlightthickness=1)
         title.pack(side="top")
         semList = tk.Frame(self, highlightbackground="black", highlightthickness=1)
 
-        self.GUI_sem_list = []
+        self.GUI_sem_list = [GUI_Semester(semList, "semester 1", 28), GUI_Semester(semList, "semester 2", 83.22)]
 
-        for sem in self.sem_list:
-            self.GUI_sem_list.append(GUI_Semester(semList, sem.name, sem.calc_avg()))
         for sem in self.GUI_sem_list:
             sem.pack(side="top", pady=10)
         
-
         semList.pack(fill=None, expand=False)
                 
 
@@ -78,7 +68,7 @@ class GUI_CourseList(tk.Frame):
         super().__init__(parent)
         l = tk.Label(self, text=parent.name)
         l.pack()
-        
+
         self.tkraise()
 
 
