@@ -8,6 +8,7 @@ def bind_children_to_click(widget, callback, button="<Button-1>"):
     for child in widget.winfo_children():
         bind_children_to_click(child, callback, button)
 
+
 # main window
 class App(tk.Tk):
     def __init__(self, title, dimensions) -> None:
@@ -68,20 +69,24 @@ class GUI_Semester(tk.Frame):
     
     
     def foo(self, event):
+        GUI_CourseList(self)
         print(self.name + " has been pressed")
 
 
 class GUI_CourseList(tk.Frame):
     def __init__(self, parent) -> None:
         super().__init__(parent)
+        l = tk.Label(self, text=parent.name)
+        l.pack()
+        
+        self.tkraise()
 
 
 class GUI_Course(tk.Frame):
     def __init__(self, parent, name, grade_list=[]) -> None:
         super().__init__(parent)
         self.name = name
-        self.grades = grade_list
-        self.adjusted_avg = self.calc_adjusted_weighted_avg()
+        self.grades = grade_list 
 
 
 class GUI_GradeList(tk.Frame):
@@ -95,6 +100,7 @@ class GUI_Grade(tk.Frame):
         self.name = name
         self.score = score
         self.weight = weight
+
 
 if __name__ == "__main__":
     App("test", (600, 600))
