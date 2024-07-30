@@ -1,12 +1,8 @@
 import tkinter as tk
-import utils
+from tkinter import ttk
 
 
-def bind_children_to_click(widget, callback, button="<Button-1>"):
-    """Bind all children of a widget to the click event."""
-    widget.bind("<Button-1>", callback)
-    for child in widget.winfo_children():
-        bind_children_to_click(child, callback, button)
+TITLEFONT =("Verdana", 35)
 
 
 # main window
@@ -19,78 +15,78 @@ class App(tk.Tk):
         self.minsize(dimensions[0], dimensions[1])
 
 
-        GUI_sem_list = GUI_SemesterList(self)
-        GUI_sem_list.pack(expand=True, fill='both')
-        
-        self.mainloop()
+        container = tk.Frame(self)  
+        container.pack(side = "top", fill = "both", expand = True)
+
+        container.grid_rowconfigure(0, weight = 1)
+        container.grid_columnconfigure(0, weight = 1)
+
+        self.frames = {}
+
+        for F in (GUI_SemesterList, GUI_CourseList, GUI_GradeList):
+  
+            frame = F(container, self)
+            self.frames[F] = frame 
+  
+            frame.grid(row = 0, column = 0, sticky ="nsew")
+  
+        self.show_frame(GUI_SemesterList)
+
+
+    def show_frame(self, cont):
+        frame = self.frames[cont]
+        frame.tkraise()
+
 
 
 class GUI_SemesterList(tk.Frame):
-    def __init__(self, parent) -> None:
-        super().__init__(parent, highlightbackground="black", highlightthickness=1)
-        
-        title = tk.Label(self, text="Semesters", font=("Arial", 40), highlightbackground="black", highlightthickness=1)
-        title.pack(side="top")
-        semList = tk.Frame(self, highlightbackground="black", highlightthickness=1)
+    def __init__(self, parent, controller): 
+        tk.Frame.__init__(self, parent)
+         
+        title = ttk.Label(self, text ="Semesters", font = TITLEFONT)
+         
+        title.grid(row = 0, column = 4, padx = 10, pady = 10) 
+  
+        courses_btn = ttk.Button(self, text ="Courses",
+        command = lambda : controller.show_frame(GUI_CourseList))
+     
+        courses_btn.grid(row = 1, column = 1, padx = 10, pady = 10)
 
-        self.GUI_sem_list = [GUI_Semester(semList, "semester 1", 28), GUI_Semester(semList, "semester 2", 83.22)]
-
-        for sem in self.GUI_sem_list:
-            sem.pack(side="top", pady=10)
-        
-        semList.pack(fill=None, expand=False)
-                
-
-class GUI_Semester(tk.Frame):
-    def __init__(self, parent, name, average) -> None:
-        super().__init__(parent, highlightbackground="black", highlightthickness=1)
-        self.name = name
-        self.avg = average
-        
-        sem_name = tk.Label(self, text=self.name, font=("Arial", 25), padx=10)
-        sem_grade = tk.Label(self, text=f"avg: {round(self.avg, 2)}", font=("Arial", 20), padx=10)
-
-        sem_name.pack(side="left")
-        sem_grade.pack(side="right")
-        
-
-        bind_children_to_click(self, self.foo)
-        self.config(cursor="openhand")
-    
-    
-    def foo(self, event):
-        GUI_CourseList(self)
-        print(self.name + " has been pressed")
 
 
 class GUI_CourseList(tk.Frame):
-    def __init__(self, parent) -> None:
-        super().__init__(parent)
-        l = tk.Label(self, text=parent.name)
-        l.pack()
+    def __init__(self, parent, controller):
+         
+        tk.Frame.__init__(self, parent)
+        title = ttk.Label(self, text ="Courses", font = TITLEFONT)
+        title.grid(row = 0, column = 4, padx = 10, pady = 10)
+  
+        
+        semesters_btn = ttk.Button(self, text ="Go back",
+                            command = lambda : controller.show_frame(GUI_SemesterList))
+     
+        semesters_btn.grid(row = 1, column = 1, padx = 10, pady = 10)
+  
+        grades_btn = ttk.Button(self, text ="Grades",
+                            command = lambda : controller.show_frame(GUI_GradeList))
+     
+        grades_btn.grid(row = 2, column = 1, padx = 10, pady = 10)
 
-        self.tkraise()
-
-
-class GUI_Course(tk.Frame):
-    def __init__(self, parent, name, grade_list=[]) -> None:
-        super().__init__(parent)
-        self.name = name
-        self.grades = grade_list 
 
 
 class GUI_GradeList(tk.Frame):
-    def __init__(self, parent) -> None:
-        super().__init__(parent)
+    def __init__(self, parent, controller):
+        tk.Frame.__init__(self, parent)
+        title = ttk.Label(self, text ="Grades", font = TITLEFONT)
+        title.grid(row = 0, column = 4, padx = 10, pady = 10)
+  
+        courses_btn = ttk.Button(self, text ="Go back",
+                            command = lambda : controller.show_frame(GUI_CourseList))
+     
+        courses_btn.grid(row = 1, column = 1, padx = 10, pady = 10)
 
-
-class GUI_Grade(tk.Frame):
-    def __init__(self, parent, name, score=-1, weight=-1) -> None:
-        super().__init__(parent)
-        self.name = name
-        self.score = score
-        self.weight = weight
 
 
 if __name__ == "__main__":
-    App("test", (600, 600))
+    app = App("test", (600, 600))
+    app.mainloop()
