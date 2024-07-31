@@ -4,6 +4,11 @@ from tkinter import ttk
 
 TITLEFONT =("Verdana", 35)
 
+# binds all children to event
+def bind_show_frame_to_children(widget, controller, target_page, button="<Button-1>"):
+    widget.bind(button, lambda e: controller.show_frame(target_page))
+    for child in widget.winfo_children():
+            child.bind(button, lambda e: controller.show_frame(target_page))
 
 # main window
 class App(tk.Tk):
@@ -46,22 +51,45 @@ class GUI_SemesterList(tk.Frame):
     def __init__(self, parent, controller): 
         tk.Frame.__init__(self, parent)
          
-        title = ttk.Label(self, text ="Semesters", font = TITLEFONT)
          
-        title.pack()
-  
-        courses_btn = ttk.Button(self, text ="Courses",
-        command = lambda : controller.show_frame(GUI_CourseList))
-     
-        courses_btn.pack()
+        title = tk.Label(self, text="Semesters", font=TITLEFONT, highlightbackground="black", highlightthickness=1)
+        title.pack(side="top")
 
+        self.semList = tk.Frame(self)
+        self.GUI_sem_list = [GUI_Semester(self.semList, controller, "sem 1", 20), GUI_Semester(self.semList, controller, "sem 1", 20)]
+
+        for sem in self.GUI_sem_list:
+            sem.pack(side="top", pady=10)
+        
+        self.semList.pack(fill=None, expand=False)
+
+
+
+
+class GUI_Semester(tk.Frame):
+    def __init__(self, parent, controller, name, average):
+        tk.Frame.__init__(self, parent)
+
+        self.name = name
+        self.avg = average
+
+        sem_name = tk.Label(self, text=self.name, font=("Arial", 25), padx=10)
+        sem_grade = tk.Label(self, text=f"avg: {round(self.avg, 2)}", font=("Arial", 20), padx=10)
+
+        sem_name.pack(side="left")
+        sem_grade.pack(side="right")
+
+        bind_show_frame_to_children(self, controller, GUI_CourseList)
+
+        self.config(cursor="openhand")
+        
 
 
 class GUI_CourseList(tk.Frame):
     def __init__(self, parent, controller):
-         
         tk.Frame.__init__(self, parent)
-        title = ttk.Label(self, text ="Courses", font = TITLEFONT)
+        
+        title = ttk.Label(self, text="courses", font=TITLEFONT)
         title.pack()
   
         
@@ -80,7 +108,8 @@ class GUI_CourseList(tk.Frame):
 class GUI_GradeList(tk.Frame):
     def __init__(self, parent, controller):
         tk.Frame.__init__(self, parent)
-        title = ttk.Label(self, text ="Grades", font = TITLEFONT)
+        
+        title = ttk.Label(self, text="Grades", font=TITLEFONT)
         title.pack()
   
         courses_btn = ttk.Button(self, text ="Go back",
