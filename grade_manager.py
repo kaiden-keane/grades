@@ -1,4 +1,5 @@
 import tkinter as tk
+import utils
 
 
 TITLEFONT = ("Arial", 35)
@@ -49,6 +50,9 @@ class GUI_SemesterList(tk.Frame):
             sem.pack(side="top", pady=10)
         # pack self
         self.semList.pack(fill=None, expand=False)
+    
+    def update(self):
+        pass
 
 
 
@@ -64,7 +68,7 @@ class GUI_Semester(tk.Frame):
         sem_grade = tk.Label(self, text=f"avg: {round(self.avg, 2)}", font=ITEMDATAFONT, padx=10)
 
         sem_name.pack(side="left")
-        sem_grade.pack(side="right")
+        sem_grade.pack(side="left")
 
         # set the children to bind to the same input as self
         course_list = GUI_CourseList(self, controller, container)
@@ -72,7 +76,14 @@ class GUI_Semester(tk.Frame):
         sem_name.bind("<Button-1>", lambda e: controller.show_frame(course_list))
         sem_grade.bind("<Button-1>", lambda e: controller.show_frame(course_list))
 
+        del_btn = tk.Button(self, text="delete", command=self.delete)
+        del_btn.config(cursor="openhand")
+        del_btn.pack(side="left")
+
         self.config(cursor="openhand") # changes hand icon on hover
+    
+    def delete(self):
+        print(f"deleted {self.name}")
         
 
 
@@ -84,6 +95,7 @@ class GUI_CourseList(tk.Frame):
         title = tk.Label(self, text=parent.name, font=TITLEFONT)
         
         back_btn = tk.Button(self, text="back", command=lambda : controller.show_frame(parent.screen))
+        back_btn.config(cursor="openhand")
         
         self.courseList = tk.Frame(self)
         self.GUI_course_list = [GUI_Course(self, controller, container, self.courseList, "course 1", 97.3234),
@@ -111,14 +123,22 @@ class GUI_Course(tk.Frame):
         course_grade = tk.Label(self, text=f"avg: {round(self.avg, 2)}", font=ITEMDATAFONT, padx=10)
 
         course_name.pack(side="left")
-        course_grade.pack(side="right")
+        course_grade.pack(side="left")
 
         grade_list = GUI_GradeList(self, controller, container)
         self.bind("<Button-1>", lambda e: controller.show_frame(grade_list))
         course_name.bind("<Button-1>", lambda e: controller.show_frame(grade_list))
         course_grade.bind("<Button-1>", lambda e: controller.show_frame(grade_list))
 
+        del_btn = tk.Button(self, text="delete", command=self.delete)
+        del_btn.config(cursor="openhand")
+        del_btn.pack(side="left")
+
         self.config(cursor="openhand")
+    
+    def delete(self):
+        print(f"deleted {self.name}")
+        
 
 
 
@@ -130,6 +150,7 @@ class GUI_GradeList(tk.Frame):
         
         title = tk.Label(self, text=parent.name, font=TITLEFONT)
         back_btn = tk.Button(self, text="back", command=lambda : controller.show_frame(parent.screen))
+        back_btn.config(cursor="openhand")
 
         self.gradeList = tk.Frame(self)
         self.GUI_grade_list = [GUI_Grade(self, controller, container, self.gradeList, "grade 1", 34.3),
@@ -158,7 +179,16 @@ class GUI_Grade(tk.Frame):
         course_grade = tk.Label(self, text=f"avg: {round(self.avg, 2)}", font=ITEMDATAFONT, padx=10)
 
         course_name.pack(side="left")
-        course_grade.pack(side="right")
+        course_grade.pack(side="left")
+
+        del_btn = tk.Button(self, text="delete", command=self.delete)
+        del_btn.config(cursor="openhand")
+        del_btn.pack(side="left")
+
+        self.config(cursor="openhand")
+    
+    def delete(self):
+        print(f"deleted {self.name}")
 
 
 
