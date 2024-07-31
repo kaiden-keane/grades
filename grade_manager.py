@@ -1,14 +1,9 @@
 import tkinter as tk
-from tkinter import ttk
 
 
-TITLEFONT =("Verdana", 35)
-
-# binds all children to event
-def bind_show_frame_to_children(widget, controller, target_page, button="<Button-1>"):
-    widget.bind(button, lambda e: controller.show_frame(target_page))
-    for child in widget.winfo_children():
-            child.bind(button, lambda e: controller.show_frame(target_page))
+TITLEFONT = ("Arial", 35)
+ITEMNAMEFONT = ("Arial", 25)
+ITEMDATAFONT = ("Arial", 20)
 
 # main window
 class App(tk.Tk):
@@ -28,7 +23,7 @@ class App(tk.Tk):
 
         container.pack()
 
-        semList = GUI_SemesterList(container, self)
+        semList = GUI_SemesterList(container, self, container)
         self.show_frame(semList)
 
 
@@ -38,21 +33,21 @@ class App(tk.Tk):
 
 
 class GUI_SemesterList(tk.Frame):
-    def __init__(self, parent, controller): 
-        tk.Frame.__init__(self, parent)
-        container = parent
+    def __init__(self, parent, controller, container): 
+        tk.Frame.__init__(self, container)
         self.grid(row=0, column=0, sticky="nsew")
          
-        title = tk.Label(self, text="Semesters", font=TITLEFONT, highlightbackground="black", highlightthickness=1)
-        title.pack(side="top")
+        title = tk.Label(self, text="Semesters", font=TITLEFONT)
 
         self.semList = tk.Frame(self)
         self.GUI_sem_list = [GUI_Semester(self, controller, container, self.semList, "sem 1", 20),
                              GUI_Semester(self, controller, container, self.semList, "sem 2", 20)]
 
+        # pack children
+        title.pack(side="top")
         for sem in self.GUI_sem_list:
             sem.pack(side="top", pady=10)
-        
+        # pack self
         self.semList.pack(fill=None, expand=False)
 
 
@@ -60,21 +55,24 @@ class GUI_SemesterList(tk.Frame):
 
 class GUI_Semester(tk.Frame):
     def __init__(self, parent, controller, container, list_container, name, average):
-        tk.Frame.__init__(self, list_container)
-
+        tk.Frame.__init__(self, list_container, highlightbackground="black", highlightthickness=1)
         self.name = name
         self.avg = average
         self.screen = parent
 
-        sem_name = tk.Label(self, text=self.name, font=("Arial", 25), padx=10)
-        sem_grade = tk.Label(self, text=f"avg: {round(self.avg, 2)}", font=("Arial", 20), padx=10)
+        sem_name = tk.Label(self, text=self.name, font=ITEMNAMEFONT, padx=10)
+        sem_grade = tk.Label(self, text=f"avg: {round(self.avg, 2)}", font=ITEMDATAFONT, padx=10)
 
         sem_name.pack(side="left")
         sem_grade.pack(side="right")
 
-        bind_show_frame_to_children(self, controller, GUI_CourseList(self, controller, container))
+        # set the children to bind to the same input as self
+        course_list = GUI_CourseList(self, controller, container)
+        self.bind("<Button-1>", lambda e: controller.show_frame(course_list))
+        sem_name.bind("<Button-1>", lambda e: controller.show_frame(course_list))
+        sem_grade.bind("<Button-1>", lambda e: controller.show_frame(course_list))
 
-        self.config(cursor="openhand")
+        self.config(cursor="openhand") # changes hand icon on hover
         
 
 
@@ -83,29 +81,59 @@ class GUI_CourseList(tk.Frame):
         tk.Frame.__init__(self, container)
         self.grid(row=0, column=0, sticky="nsew")
         
-        title = ttk.Label(self, text=parent.name, font=TITLEFONT)
-        title.pack()
-  
+        title = tk.Label(self, text=parent.name, font=TITLEFONT)
         
-        semesters_btn = ttk.Button(self, text ="Go back",
-                            command = lambda : controller.show_frame(parent.screen))
-     
-        semesters_btn.pack()
+        back_btn = tk.Button(self, text="back", command=lambda : controller.show_frame(parent.screen))
+        
+        self.courseList = tk.Frame(self)
+        self.GUI_course_list = [GUI_Course(self, controller, container, self.courseList, "course 1", 20),
+                             GUI_Course(self, controller, container, self.courseList, "course 2", 20)]
+
+        # pack children
+        title.pack(side="top")
+        back_btn.pack()
+        for course in self.GUI_course_list:
+            course.pack(side="top", pady=10)
+        
+        # pack self
+        self.courseList.pack(fill=None, expand=False)
+
+
+
+class GUI_Course(tk.Frame):
+    def __init__(self, parent, controller, container, list_container, name, average):
+        tk.Frame.__init__(self, list_container, highlightbackground="black", highlightthickness=1)
+        self.name = name
+        self.avg = average
+        self.screen = parent
+
+        course_name = tk.Label(self, text=self.name, font=ITEMNAMEFONT, padx=10)
+        course_grade = tk.Label(self, text=f"avg: {round(self.avg, 2)}", font=ITEMDATAFONT, padx=10)
+
+        course_name.pack(side="left")
+        course_grade.pack(side="right")
+
+        grade_list = GUI_GradeList(self, controller, container)
+        self.bind("<Button-1>", lambda e: controller.show_frame(grade_list))
+        course_name.bind("<Button-1>", lambda e: controller.show_frame(grade_list))
+        course_grade.bind("<Button-1>", lambda e: controller.show_frame(grade_list))
+
+        self.config(cursor="openhand")
+
 
 
 
 class GUI_GradeList(tk.Frame):
     def __init__(self, parent, controller, container):
-        tk.Frame.__init__(self, parent)
+        tk.Frame.__init__(self, container)
+        self.grid(row=0, column=0, sticky="nsew")
         
-        title = ttk.Label(self, text=parent.name, font=TITLEFONT)
-        title.pack()
-  
-        courses_btn = ttk.Button(self, text ="Go back",
-                            command = lambda : controller.show_frame(GUI_CourseList))
-     
-        courses_btn.pack()
+        title = tk.Label(self, text=parent.name, font=TITLEFONT)
+        back_btn = tk.Button(self, text="back", command=lambda : controller.show_frame(parent.screen))
 
+        title.pack(side="top")
+        back_btn.pack()
+  
 
 
 if __name__ == "__main__":
