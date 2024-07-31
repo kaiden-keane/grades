@@ -17,9 +17,11 @@ class App(tk.Tk):
 
         container = tk.Frame(self)  
         container.pack(side = "top", fill = "both", expand = True)
+        
+        container.grid_rowconfigure(0, weight=1)
+        container.grid_columnconfigure(0, weight=1)
 
-        container.grid_rowconfigure(0, weight = 1)
-        container.grid_columnconfigure(0, weight = 1)
+        container.pack()
 
         self.frames = {}
 
@@ -27,8 +29,9 @@ class App(tk.Tk):
   
             frame = F(container, self)
             self.frames[F] = frame 
-  
-            frame.grid(row = 0, column = 0, sticky ="nsew")
+
+            
+            frame.grid(row=0, column=0, sticky="nsew")
   
         self.show_frame(GUI_SemesterList)
 
@@ -45,12 +48,12 @@ class GUI_SemesterList(tk.Frame):
          
         title = ttk.Label(self, text ="Semesters", font = TITLEFONT)
          
-        title.grid(row = 0, column = 4, padx = 10, pady = 10) 
+        title.pack()
   
         courses_btn = ttk.Button(self, text ="Courses",
         command = lambda : controller.show_frame(GUI_CourseList))
      
-        courses_btn.grid(row = 1, column = 1, padx = 10, pady = 10)
+        courses_btn.pack()
 
 
 
@@ -59,18 +62,18 @@ class GUI_CourseList(tk.Frame):
          
         tk.Frame.__init__(self, parent)
         title = ttk.Label(self, text ="Courses", font = TITLEFONT)
-        title.grid(row = 0, column = 4, padx = 10, pady = 10)
+        title.pack()
   
         
         semesters_btn = ttk.Button(self, text ="Go back",
                             command = lambda : controller.show_frame(GUI_SemesterList))
      
-        semesters_btn.grid(row = 1, column = 1, padx = 10, pady = 10)
+        semesters_btn.pack()
   
         grades_btn = ttk.Button(self, text ="Grades",
                             command = lambda : controller.show_frame(GUI_GradeList))
      
-        grades_btn.grid(row = 2, column = 1, padx = 10, pady = 10)
+        grades_btn.pack()
 
 
 
@@ -78,12 +81,12 @@ class GUI_GradeList(tk.Frame):
     def __init__(self, parent, controller):
         tk.Frame.__init__(self, parent)
         title = ttk.Label(self, text ="Grades", font = TITLEFONT)
-        title.grid(row = 0, column = 4, padx = 10, pady = 10)
+        title.pack()
   
         courses_btn = ttk.Button(self, text ="Go back",
                             command = lambda : controller.show_frame(GUI_CourseList))
      
-        courses_btn.grid(row = 1, column = 1, padx = 10, pady = 10)
+        courses_btn.pack()
 
 
 
