@@ -36,31 +36,52 @@ class App(tk.Tk):
 class GUI_SemesterList(tk.Frame):
     def __init__(self, parent: tk.Frame, controller: tk.Tk, container: tk.Frame): 
         tk.Frame.__init__(self, container)
+        
+        self.parent = parent
+        self.controller = controller
+        self.container = container
+
         self.grid(row=0, column=0, sticky="nsew")
-         
+        
         title = tk.Label(self, text="Semesters", font=TITLEFONT)
 
         self.semList = tk.Frame(self)
         self.GUI_sem_list = [GUI_Semester(self, controller, container, self.semList, "sem 1", 20),
                              GUI_Semester(self, controller, container, self.semList, "sem 2", 20)]
 
-        add_btn = tk.Button(self.semList, text="click to add new semester", command=self.add)
-        add_btn.config(cursor="openhand")
+        self.add_btn = tk.Button(self.semList, text="click to add new semester", command=self.add)
+        self.add_btn.config(cursor="openhand")
 
         # pack children
         title.pack(side="top")
-        for sem in self.GUI_sem_list:
-            sem.pack(side="top", pady=10)
-        add_btn.pack(side="bottom", pady=10)
+        self.update()
         # pack self
         self.semList.pack(fill=None, expand=False)
         
     
     def add(self):
-        print("add new semester")
+        self.GUI_sem_list.append(GUI_Semester(self, self.controller, self.container, self.semList, "added sem", 999))
+        self.update()
+        self.tkraise()
+
     
-    def remove(self):
-        pass
+    def remove(self, item):
+        print(item)
+        for i in range(len(self.GUI_sem_list)):
+            print(self.GUI_sem_list[i])
+            if item is self.GUI_sem_list[i]:
+                self.GUI_sem_list[i].destroy()
+                self.GUI_sem_list.pop(i)
+                
+                break
+        
+        self.update()
+        self.tkraise()
+    
+    def update(self):
+        for sem in self.GUI_sem_list:
+            sem.pack(side="top", pady=10)
+        self.add_btn.pack(side="bottom", pady=10)
 
 
 
@@ -71,6 +92,7 @@ class GUI_Semester(tk.Frame):
         self.name = name
         self.avg = average
         self.screen = parent
+        self.parent = parent
 
         sem_name = tk.Label(self, text=self.name, font=ITEMNAMEFONT, padx=10)
         sem_grade = tk.Label(self, text=f"avg: {round(self.avg, 2)}", font=ITEMDATAFONT, padx=10)
@@ -91,7 +113,7 @@ class GUI_Semester(tk.Frame):
         self.config(cursor="openhand") # changes hand icon on hover
     
     def delete(self):
-        print(f"deleted {self.name}")
+        self.parent.remove(self)
         
 
 
