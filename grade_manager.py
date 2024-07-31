@@ -44,14 +44,22 @@ class GUI_SemesterList(tk.Frame):
         self.GUI_sem_list = [GUI_Semester(self, controller, container, self.semList, "sem 1", 20),
                              GUI_Semester(self, controller, container, self.semList, "sem 2", 20)]
 
+        add_btn = tk.Button(self.semList, text="click to add new semester", command=self.add)
+        add_btn.config(cursor="openhand")
+
         # pack children
         title.pack(side="top")
         for sem in self.GUI_sem_list:
             sem.pack(side="top", pady=10)
+        add_btn.pack(side="bottom", pady=10)
         # pack self
         self.semList.pack(fill=None, expand=False)
+        
     
-    def update(self):
+    def add(self):
+        print("add new semester")
+    
+    def remove(self):
         pass
 
 
@@ -100,15 +108,25 @@ class GUI_CourseList(tk.Frame):
         self.courseList = tk.Frame(self)
         self.GUI_course_list = [GUI_Course(self, controller, container, self.courseList, "course 1", 97.3234),
                              GUI_Course(self, controller, container, self.courseList, "course 2", 67.3)]
+        
+        add_btn = tk.Button(self.courseList, text="click to add new course", command=self.add)
+        add_btn.config(cursor="openhand")
 
         # pack children
         title.pack(side="top")
         back_btn.pack()
         for course in self.GUI_course_list:
             course.pack(side="top", pady=10)
-        
+        add_btn.pack(side="bottom", pady=10)
         # pack self
         self.courseList.pack(fill=None, expand=False)
+        
+    
+    def add(self):
+        print("add new course")
+    
+    def remove(self):
+        pass
 
 
 
@@ -156,14 +174,25 @@ class GUI_GradeList(tk.Frame):
         self.GUI_grade_list = [GUI_Grade(self, controller, container, self.gradeList, "grade 1", 34.3),
                              GUI_Grade(self, controller, container, self.gradeList, "grade 2", 53.0)]
 
+        add_btn = tk.Button(self.gradeList, text="click to add new grade", command=self.add)
+        add_btn.config(cursor="openhand")
+
         # pack children
         title.pack(side="top")
         back_btn.pack()
         for grade in self.GUI_grade_list:
             grade.pack(side="top", pady=10)
-        
+        add_btn.pack(side="bottom", pady=10)
         # pack self
         self.gradeList.pack(fill=None, expand=False)
+        
+    
+    def add(self):
+        print("add new grade")
+    
+    def remove(self):
+        pass
+
 
   
 
