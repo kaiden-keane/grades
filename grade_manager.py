@@ -1,21 +1,22 @@
 import tkinter as tk
-import utils
 
 
 TITLEFONT = ("Arial", 35)
 ITEMNAMEFONT = ("Arial", 25)
 ITEMDATAFONT = ("Arial", 20)
 
+
 # main window
 class App(tk.Tk):
     def __init__(self, title, dimensions) -> None:
         super().__init__()
-        self.title(title)
+        self.title(title) # set the title of the window
 
+        # set the size of the window
         self.geometry(f"{dimensions[0]}x{dimensions[1]}")
         self.minsize(dimensions[0], dimensions[1])
 
-
+        # container that holds all the frames that are switched between
         container = tk.Frame(self)  
         container.pack(side = "top", fill = "both", expand = True)
         
@@ -24,8 +25,8 @@ class App(tk.Tk):
 
         container.pack()
 
-        semList = GUI_SemesterList(container, self, container)
-        self.show_frame(semList)
+        gui_semester_list = SemesterList(container, self, container)
+        self.show_frame(gui_semester_list)
 
 
     def show_frame(self, frame):
@@ -33,66 +34,68 @@ class App(tk.Tk):
 
 
 
-class GUI_SemesterList(tk.Frame):
-    def __init__(self, parent: tk.Frame, controller: tk.Tk, container: tk.Frame): 
+class SemesterList(tk.Frame):
+    def __init__(self, parent: tk.Frame, controller: App, container: tk.Frame): 
         tk.Frame.__init__(self, container)
+        self.grid(row=0, column=0, sticky="nsew") # position inside container
         
         self.parent = parent
         self.controller = controller
         self.container = container
-
-        self.grid(row=0, column=0, sticky="nsew")
         
-        title = tk.Label(self, text="Semesters", font=TITLEFONT)
+        self.semesters = [] # list of all semesters (type Semester)
+        self.gui_semester_list = tk.Frame(self) # GUI containing all the semesters
 
-        self.semList = tk.Frame(self)
-        self.GUI_sem_list = [GUI_Semester(self, controller, container, self.semList, "sem 1", 20),
-                             GUI_Semester(self, controller, container, self.semList, "sem 2", 20)]
+        title = tk.Label(self, text="Semesters", font=TITLEFONT) # title of page
 
-        self.add_btn = tk.Button(self.semList, text="click to add new semester", command=self.add)
+        # button at bottom for adding new semester
+        self.add_btn = tk.Button(self.gui_semester_list, text="click to add new semester", command=self.add)
         self.add_btn.config(cursor="openhand")
 
         # pack children
         title.pack(side="top")
-        self.update()
+        self.pack_semesters()
         # pack self
-        self.semList.pack(fill=None, expand=False)
+        self.gui_semester_list.pack(fill=None, expand=False)
         
     
     def add(self):
-        self.GUI_sem_list.append(GUI_Semester(self, self.controller, self.container, self.semList, "added sem", 999))
-        self.update()
-        self.tkraise()
+        self.semesters.append(Semester(self, self.controller, self.container, self.gui_semester_list, "added sem", 999))
+        self.pack_semesters()
+        self.controller.show_frame(self)
 
     
     def remove(self, item):
         print(item)
-        for i in range(len(self.GUI_sem_list)):
-            print(self.GUI_sem_list[i])
-            if item is self.GUI_sem_list[i]:
-                self.GUI_sem_list[i].destroy()
-                self.GUI_sem_list.pop(i)
-                
+        for i in range(len(self.semesters)):
+            print(self.semesters[i])
+            if item is self.semesters[i]:
+                self.semesters[i].destroy()
+                self.semesters.pop(i)
                 break
         
-        self.update()
-        self.tkraise()
+        self.pack_semesters()
+        self.controller.show_frame(self)
     
-    def update(self):
-        for sem in self.GUI_sem_list:
+
+    def pack_semesters(self):
+        for sem in self.semesters:
             sem.pack(side="top", pady=10)
         self.add_btn.pack(side="bottom", pady=10)
 
 
 
-
-class GUI_Semester(tk.Frame):
-    def __init__(self, parent: GUI_SemesterList, controller: tk.Tk, container: tk.Frame, list_container: tk.Frame, name: str, average: float):
+class Semester(tk.Frame):
+    def __init__(self, parent: SemesterList, controller: tk.Tk, container: tk.Frame, list_container: tk.Frame, name: str, average: float):
         tk.Frame.__init__(self, list_container, highlightbackground="black", highlightthickness=1)
+        self.parent = parent
+        self.controller = controller
+        self.container = container
+        
         self.name = name
         self.avg = average
         self.screen = parent
-        self.parent = parent
+        self.courses = []
 
         sem_name = tk.Label(self, text=self.name, font=ITEMNAMEFONT, padx=10)
         sem_grade = tk.Label(self, text=f"avg: {round(self.avg, 2)}", font=ITEMDATAFONT, padx=10)
@@ -101,63 +104,91 @@ class GUI_Semester(tk.Frame):
         sem_grade.pack(side="left")
 
         # set the children to bind to the same input as self
-        course_list = GUI_CourseList(self, controller, container)
-        self.bind("<Button-1>", lambda e: controller.show_frame(course_list))
-        sem_name.bind("<Button-1>", lambda e: controller.show_frame(course_list))
-        sem_grade.bind("<Button-1>", lambda e: controller.show_frame(course_list))
+        gui_course_list = CourseList(self, controller, container)
+        self.bind("<Button-1>", lambda e: controller.show_frame(gui_course_list))
+        sem_name.bind("<Button-1>", lambda e: controller.show_frame(gui_course_list))
+        sem_grade.bind("<Button-1>", lambda e: controller.show_frame(gui_course_list))
 
-        del_btn = tk.Button(self, text="delete", command=self.delete)
-        del_btn.config(cursor="openhand")
-        del_btn.pack(side="left")
+        # button to delete semester
+        self.del_btn = tk.Button(self, text="delete", command=self.delete)
+        self.del_btn.config(cursor="openhand")
+        self.del_btn.pack(side="left")
 
         self.config(cursor="openhand") # changes hand icon on hover
     
+
     def delete(self):
         self.parent.remove(self)
         
 
 
-class GUI_CourseList(tk.Frame):
-    def __init__(self, parent: GUI_Semester, controller: tk.Tk, container: tk.Frame):
+class CourseList(tk.Frame):
+    def __init__(self, parent: Semester, controller: tk.Tk, container: tk.Frame):
         tk.Frame.__init__(self, container)
-        self.grid(row=0, column=0, sticky="nsew")
+        self.grid(row=0, column=0, sticky="nsew") # position inside container
+        
+        self.parent = parent
+        self.controller = controller
+        self.container = container
+        
+        self.courses = parent.courses # list of all courses (type Course)
+        self.gui_course_list = tk.Frame(self) # GUI container for course list
         
         title = tk.Label(self, text=parent.name, font=TITLEFONT)
         
-        back_btn = tk.Button(self, text="back", command=lambda : controller.show_frame(parent.screen))
-        back_btn.config(cursor="openhand")
-        
-        self.courseList = tk.Frame(self)
-        self.GUI_course_list = [GUI_Course(self, controller, container, self.courseList, "course 1", 97.3234),
-                             GUI_Course(self, controller, container, self.courseList, "course 2", 67.3)]
-        
-        add_btn = tk.Button(self.courseList, text="click to add new course", command=self.add)
-        add_btn.config(cursor="openhand")
+        # button at bottom for adding new course
+        self.add_btn = tk.Button(self.gui_course_list, text="click to add new course", command=self.add)
+        self.add_btn.config(cursor="openhand")
 
+        # button at top to go to previous page
+        self.back_btn = tk.Button(self, text="back", command=lambda : controller.show_frame(self.parent.screen))
+        self.back_btn.config(cursor="openhand")
+        
         # pack children
         title.pack(side="top")
-        back_btn.pack()
-        for course in self.GUI_course_list:
-            course.pack(side="top", pady=10)
-        add_btn.pack(side="bottom", pady=10)
+        self.back_btn.pack()
+        self.pack_courses()
         # pack self
-        self.courseList.pack(fill=None, expand=False)
+        self.gui_course_list.pack(fill=None, expand=False)
         
     
     def add(self):
-        print("add new course")
+        self.courses.append(Course(self, self.controller, self.container, self.gui_course_list, "added course", 32.54))
+        self.pack_courses()
+        self.controller.show_frame(self)
     
-    def remove(self):
-        pass
+
+    def remove(self, item):
+        print(item)
+        for i in range(len(self.courses)):
+            print(self.courses[i])
+            if item is self.scourses[i]:
+                self.courses[i].destroy()
+                self.courses.pop(i)
+                break
+        
+        self.pack_semesters()
+        self.controller.show_frame(self)
+    
+
+    def pack_courses(self):
+        for course in self.courses:
+            course.pack(side="top", pady=10)
+        self.add_btn.pack(side="bottom", pady=10)
 
 
 
-class GUI_Course(tk.Frame):
-    def __init__(self, parent: GUI_CourseList, controller: tk.Tk, container: tk.Frame, list_container: tk.Frame, name: str, average: float):
+class Course(tk.Frame):
+    def __init__(self, parent: CourseList, controller: tk.Tk, container: tk.Frame, list_container: tk.Frame, name: str, average: float):
         tk.Frame.__init__(self, list_container, highlightbackground="black", highlightthickness=1)
+        self.parent = parent
+        self.controller = controller
+        self.container = container
+        
         self.name = name
         self.avg = average
         self.screen = parent
+        self.grades = []
 
         course_name = tk.Label(self, text=self.name, font=ITEMNAMEFONT, padx=10)
         course_grade = tk.Label(self, text=f"avg: {round(self.avg, 2)}", font=ITEMDATAFONT, padx=10)
@@ -165,63 +196,88 @@ class GUI_Course(tk.Frame):
         course_name.pack(side="left")
         course_grade.pack(side="left")
 
-        grade_list = GUI_GradeList(self, controller, container)
-        self.bind("<Button-1>", lambda e: controller.show_frame(grade_list))
-        course_name.bind("<Button-1>", lambda e: controller.show_frame(grade_list))
-        course_grade.bind("<Button-1>", lambda e: controller.show_frame(grade_list))
+        # set the children to bind to the same input as self
+        gui_grade_list = GradeList(self, controller, container)
+        self.bind("<Button-1>", lambda e: controller.show_frame(gui_grade_list))
+        course_name.bind("<Button-1>", lambda e: controller.show_frame(gui_grade_list))
+        course_grade.bind("<Button-1>", lambda e: controller.show_frame(gui_grade_list))
 
-        del_btn = tk.Button(self, text="delete", command=self.delete)
-        del_btn.config(cursor="openhand")
-        del_btn.pack(side="left")
+        # button to delete course
+        self.del_btn = tk.Button(self, text="delete", command=self.delete)
+        self.del_btn.config(cursor="openhand")
+        self.del_btn.pack(side="left")
 
-        self.config(cursor="openhand")
+        self.config(cursor="openhand") # changes hand icon on hover
     
+
     def delete(self):
-        print(f"deleted {self.name}")
-        
+        self.parent.remove(self)
 
 
 
-
-class GUI_GradeList(tk.Frame):
-    def __init__(self, parent: GUI_Course, controller: tk.Tk, container: tk.Frame):
+class GradeList(tk.Frame):
+    def __init__(self, parent: Course, controller: tk.Tk, container: tk.Frame):
         tk.Frame.__init__(self, container)
-        self.grid(row=0, column=0, sticky="nsew")
+        self.grid(row=0, column=0, sticky="nsew") # position inside container
         
+        self.parent = parent
+        self.controller = controller
+        self.container = container
+
+        self.grades = parent.grades # list of all grades (typ Grade)
+        self.gui_grade_list = tk.Frame(self) # GUI container for grade list
+
         title = tk.Label(self, text=parent.name, font=TITLEFONT)
-        back_btn = tk.Button(self, text="back", command=lambda : controller.show_frame(parent.screen))
-        back_btn.config(cursor="openhand")
-
-        self.gradeList = tk.Frame(self)
-        self.GUI_grade_list = [GUI_Grade(self, controller, container, self.gradeList, "grade 1", 34.3),
-                             GUI_Grade(self, controller, container, self.gradeList, "grade 2", 53.0)]
-
-        add_btn = tk.Button(self.gradeList, text="click to add new grade", command=self.add)
-        add_btn.config(cursor="openhand")
+        
+        # button at bottom for adding new course
+        self.add_btn = tk.Button(self.gui_grade_list, text="click to add new grade", command=self.add)
+        self.add_btn.config(cursor="openhand")
+        
+        # button at top to go to previous page
+        self.back_btn = tk.Button(self, text="back", command=lambda : controller.show_frame(parent.screen))
+        self.back_btn.config(cursor="openhand")
 
         # pack children
         title.pack(side="top")
-        back_btn.pack()
-        for grade in self.GUI_grade_list:
-            grade.pack(side="top", pady=10)
-        add_btn.pack(side="bottom", pady=10)
+        self.back_btn.pack()
+        self.pack_grades()
         # pack self
-        self.gradeList.pack(fill=None, expand=False)
+        self.gui_grade_list.pack(fill=None, expand=False)
         
     
     def add(self):
-        print("add new grade")
+        self.grades.append(Grade(self, self.controller, self.container, self.gui_grade_list, "added grade", 543.54))
+        self.pack_grades()
+        self.controller.show_frame(self)
     
-    def remove(self):
-        pass
 
+    def remove(self, item):
+        print(item)
+        for i in range(len(self.grades)):
+            print(self.grades[i])
+            if item is self.grades[i]:
+                self.grades[i].destroy()
+                self.grades.pop(i)
+                break
+        
+        self.pack_grades()
+        self.controller.show_frame(self)
+    
 
+    def pack_grades(self):
+        for grade in self.grades:
+            grade.pack(side="top", pady=10)
+        self.add_btn.pack(side="bottom", pady=10)
   
 
 
-class GUI_Grade(tk.Frame):
-    def __init__(self, parent: GUI_CourseList, controller: tk.Tk, container: tk.Frame, list_container: tk.Frame, name: str, average: float):
+class Grade(tk.Frame):
+    def __init__(self, parent: CourseList, controller: tk.Tk, container: tk.Frame, list_container: tk.Frame, name: str, average: float):
         tk.Frame.__init__(self, list_container, highlightbackground="black", highlightthickness=1)
+        self.parent = parent
+        self.controller = controller
+        self.container = container
+        
         self.name = name
         self.avg = average
         self.screen = parent
@@ -232,14 +288,14 @@ class GUI_Grade(tk.Frame):
         course_name.pack(side="left")
         course_grade.pack(side="left")
 
-        del_btn = tk.Button(self, text="delete", command=self.delete)
-        del_btn.config(cursor="openhand")
-        del_btn.pack(side="left")
+        self.del_btn = tk.Button(self, text="delete", command=self.delete)
+        self.del_btn.config(cursor="openhand")
+        self.del_btn.pack(side="left")
 
         self.config(cursor="openhand")
     
     def delete(self):
-        print(f"deleted {self.name}")
+        self.parent.remove(self)
 
 
 
