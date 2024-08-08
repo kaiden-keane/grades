@@ -1,9 +1,15 @@
 import tkinter as tk
 
+from os import listdir
+from os.path import isfile, join
+from os import mkdir
+
 
 TITLEFONT = ("Arial", 35)
 ITEMNAMEFONT = ("Arial", 25)
 ITEMDATAFONT = ("Arial", 20)
+
+DATADIRECTORY = "courses"
 
 
 # main window
@@ -25,8 +31,8 @@ class App(tk.Tk):
 
         container.pack()
 
-        gui_semester_list = SemesterList(container, self, container)
-        self.show_frame(gui_semester_list)
+        self.semesters = SemesterList(container, self, container)
+        self.show_frame(self.semesters)
 
 
     def show_frame(self, frame):
@@ -43,8 +49,9 @@ class SemesterList(tk.Frame):
         self.controller = controller
         self.container = container
         
-        self.semesters = [] # list of all semesters (type Semester)
         self.gui_semester_list = tk.Frame(self) # GUI containing all the semesters
+        self.semesters = []
+        self.load_semesters() # list of all semesters (type Semester)
 
         title = tk.Label(self, text="Semesters", font=TITLEFONT) # title of page
 
@@ -82,6 +89,42 @@ class SemesterList(tk.Frame):
         for sem in self.semesters:
             sem.pack(side="top", pady=10)
         self.add_btn.pack(side="bottom", pady=10)
+    
+
+    def load_semesters(self):
+        try:
+            files = [f for f in listdir(DATADIRECTORY) if isfile(join(DATADIRECTORY, f))]
+        except FileNotFoundError:
+            mkdir(DATADIRECTORY)
+            files = [f for f in listdir(DATADIRECTORY) if isfile(join(DATADIRECTORY, f))]
+        
+        for file in files:
+            new_sem = Semester(self, self.controller, self.container, self.gui_semester_list, file.split(".")[0], 0) # dont include the .txt
+            self.semesters.append(new_sem)
+        
+        self.semesters.sort()
+    
+
+    def save_semesters(self):
+        for semester in self.semesters:
+            filename = join(DATADIRECTORY, semester.name + ".txt")
+            try:
+                with open(filename, "w") as f:
+                    for course in semester.courses.courses:
+                        f.write(course.name)
+                        f.write("\n")
+                        
+                        for grade in course.grades.grades:
+                            f.write("\t" + grade.name + ": " + str(grade.avg) + " " + str(grade.weight) + "\n")
+                print(f"successfully saved to {filename}")
+                        
+            except FileNotFoundError:
+                print(f"cannot find file {filename}")
+            except IsADirectoryError:
+                print(f"{filename} is a directory")
+            except PermissionError:
+                print(f"insufficient permissions for {filename}")
+        self.controller.destroy()
 
 
 
@@ -95,7 +138,7 @@ class Semester(tk.Frame):
         self.name = name
         self.avg = average
         self.screen = parent
-        self.courses = []
+        self.courses = CourseList(self, controller, container)
 
         sem_name = tk.Label(self, text=self.name, font=ITEMNAMEFONT, padx=10)
         sem_grade = tk.Label(self, text=f"avg: {round(self.avg, 2)}", font=ITEMDATAFONT, padx=10)
@@ -104,10 +147,9 @@ class Semester(tk.Frame):
         sem_grade.pack(side="left")
 
         # set the children to bind to the same input as self
-        gui_course_list = CourseList(self, controller, container)
-        self.bind("<Button-1>", lambda e: controller.show_frame(gui_course_list))
-        sem_name.bind("<Button-1>", lambda e: controller.show_frame(gui_course_list))
-        sem_grade.bind("<Button-1>", lambda e: controller.show_frame(gui_course_list))
+        self.bind("<Button-1>", lambda e: controller.show_frame(self.courses))
+        sem_name.bind("<Button-1>", lambda e: controller.show_frame(self.courses))
+        sem_grade.bind("<Button-1>", lambda e: controller.show_frame(self.courses))
 
         # button to delete semester
         self.del_btn = tk.Button(self, text="delete", command=self.delete)
@@ -119,6 +161,9 @@ class Semester(tk.Frame):
 
     def delete(self):
         self.parent.remove(self)
+    
+    def __lt__(self, obj):
+        return self.name < obj.name
         
 
 
@@ -131,9 +176,11 @@ class CourseList(tk.Frame):
         self.controller = controller
         self.container = container
         
-        self.courses = parent.courses # list of all courses (type Course)
+        self.courses = [] # list of all courses (type Course)
         self.gui_course_list = tk.Frame(self) # GUI container for course list
         
+        self.load_courses(parent.name + ".txt")
+
         title = tk.Label(self, text=parent.name, font=TITLEFONT)
         
         # button at bottom for adding new course
@@ -153,7 +200,7 @@ class CourseList(tk.Frame):
         
     
     def add(self):
-        self.courses.append(Course(self, self.controller, self.container, self.gui_course_list, "added course", 32.54))
+        self.courses.append(Course(self, self.controller, self.container, self.gui_course_list, "added course", 32.54, 0.3))
         self.pack_courses()
         self.controller.show_frame(self)
     
@@ -162,7 +209,7 @@ class CourseList(tk.Frame):
         print(item)
         for i in range(len(self.courses)):
             print(self.courses[i])
-            if item is self.scourses[i]:
+            if item is self.courses[i]:
                 self.courses[i].destroy()
                 self.courses.pop(i)
                 break
@@ -177,9 +224,40 @@ class CourseList(tk.Frame):
         self.add_btn.pack(side="bottom", pady=10)
 
 
+    def load_courses(self, filename):
+        filename = join(DATADIRECTORY, filename)
+        try:
+            with open(filename, "r") as f:
+                current_course = 0
+                grades = []
+                for line in f:
+                    if not (line.startswith("\t") or line.startswith(" ")):
+                        if current_course != 0:
+                            grades.sort()
+                            current_course.grades.grades = grades
+                            current_course.grades.pack_grades()
+                            self.courses.append(current_course)                
+                            grades = []
+                        current_course = Course(self, self.controller, self.container, self.gui_course_list, line.strip(), 9, 0.32)
+                    else:
+                        name, data = line.strip().split(": ")
+                        grade, weight = data.strip().split(" ")
+                        grades.append(Grade(current_course.grades, self.controller, self.container, current_course.grades.gui_grade_list, name, float(grade.strip()), float(weight.strip())))
+            print(f"successfully loaded {filename}")
+        
+        except FileNotFoundError:
+            print(f"cannot find file {filename}")
+        except IsADirectoryError:
+            print(f"{filename} is a directory")
+        except PermissionError:
+            print(f"insufficient permissions for {filename}")
+        
+        self.courses.sort()
+
+
 
 class Course(tk.Frame):
-    def __init__(self, parent: CourseList, controller: tk.Tk, container: tk.Frame, list_container: tk.Frame, name: str, average: float):
+    def __init__(self, parent: CourseList, controller: tk.Tk, container: tk.Frame, list_container: tk.Frame, name: str, average: float, weight: float):
         tk.Frame.__init__(self, list_container, highlightbackground="black", highlightthickness=1)
         self.parent = parent
         self.controller = controller
@@ -188,7 +266,7 @@ class Course(tk.Frame):
         self.name = name
         self.avg = average
         self.screen = parent
-        self.grades = []
+        self.grades = GradeList(self, controller, container)
 
         course_name = tk.Label(self, text=self.name, font=ITEMNAMEFONT, padx=10)
         course_grade = tk.Label(self, text=f"avg: {round(self.avg, 2)}", font=ITEMDATAFONT, padx=10)
@@ -197,10 +275,9 @@ class Course(tk.Frame):
         course_grade.pack(side="left")
 
         # set the children to bind to the same input as self
-        gui_grade_list = GradeList(self, controller, container)
-        self.bind("<Button-1>", lambda e: controller.show_frame(gui_grade_list))
-        course_name.bind("<Button-1>", lambda e: controller.show_frame(gui_grade_list))
-        course_grade.bind("<Button-1>", lambda e: controller.show_frame(gui_grade_list))
+        self.bind("<Button-1>", lambda e: controller.show_frame(self.grades))
+        course_name.bind("<Button-1>", lambda e: controller.show_frame(self.grades))
+        course_grade.bind("<Button-1>", lambda e: controller.show_frame(self.grades))
 
         # button to delete course
         self.del_btn = tk.Button(self, text="delete", command=self.delete)
@@ -212,6 +289,9 @@ class Course(tk.Frame):
 
     def delete(self):
         self.parent.remove(self)
+    
+    def __lt__(self, obj):
+        return self.name < obj.name
 
 
 
@@ -224,7 +304,7 @@ class GradeList(tk.Frame):
         self.controller = controller
         self.container = container
 
-        self.grades = parent.grades # list of all grades (typ Grade)
+        self.grades = [] # list of all grades (typ Grade)
         self.gui_grade_list = tk.Frame(self) # GUI container for grade list
 
         title = tk.Label(self, text=parent.name, font=TITLEFONT)
@@ -246,7 +326,7 @@ class GradeList(tk.Frame):
         
     
     def add(self):
-        self.grades.append(Grade(self, self.controller, self.container, self.gui_grade_list, "added grade", 543.54))
+        self.grades.append(Grade(self, self.controller, self.container, self.gui_grade_list, "added grade", 543.54, .32))
         self.pack_grades()
         self.controller.show_frame(self)
     
@@ -272,7 +352,7 @@ class GradeList(tk.Frame):
 
 
 class Grade(tk.Frame):
-    def __init__(self, parent: CourseList, controller: tk.Tk, container: tk.Frame, list_container: tk.Frame, name: str, average: float):
+    def __init__(self, parent: CourseList, controller: tk.Tk, container: tk.Frame, list_container: tk.Frame, name: str, average: float, weight: float):
         tk.Frame.__init__(self, list_container, highlightbackground="black", highlightthickness=1)
         self.parent = parent
         self.controller = controller
@@ -280,6 +360,8 @@ class Grade(tk.Frame):
         
         self.name = name
         self.avg = average
+        self.weight = weight
+
         self.screen = parent
 
         course_name = tk.Label(self, text=self.name, font=ITEMNAMEFONT, padx=10)
@@ -294,12 +376,17 @@ class Grade(tk.Frame):
 
         self.config(cursor="openhand")
     
+
     def delete(self):
         self.parent.remove(self)
+    
 
+    def __lt__(self, obj):
+        return self.name < obj.name
 
 
 
 if __name__ == "__main__":
     app = App("test", (600, 600))
+    app.protocol("WM_DELETE_WINDOW", app.semesters.save_semesters)
     app.mainloop()
