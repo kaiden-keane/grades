@@ -243,6 +243,11 @@ class CourseList(tk.Frame):
                         name, data = line.strip().split(": ")
                         grade, weight = data.strip().split(" ")
                         grades.append(Grade(current_course.grades, self.controller, self.container, current_course.grades.gui_grade_list, name, float(grade.strip()), float(weight.strip())))
+                grades.sort()
+                current_course.grades.grades = grades
+                current_course.grades.pack_grades()
+                self.courses.append(current_course)                
+                grades = []
             print(f"successfully loaded {filename}")
         
         except FileNotFoundError:
